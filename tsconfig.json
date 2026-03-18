@@ -1,0 +1,9 @@
+{
+  // Root TypeScript configuration delegating to the app config.
+  "files": [],
+  "references": [
+    {
+      "path": "./tsconfig.app.json"
+    }
+  ]
+}
