@@ -1,34 +1,52 @@
 import styled from 'styled-components'
-import type { DateRangeColumns, PromotionFilters } from '../../model/types'
+import type { PromotionFilters } from '../../model/types'
 import { layout } from '../../../shared/styles/theme'
 
 interface FiltersPanelProps {
   headers: string[]
   filters: PromotionFilters
   showOnlyToday: boolean
-  dateRangeColumns: DateRangeColumns
   onFilterChange: (header: string, value: string) => void
   onShowOnlyTodayChange: (enabled: boolean) => void
   onResetFilters: () => void
 }
 
 const DATE_HEADER_HINT = /(fecha|date|dt_|desde|hasta|inicio|fin)/i
+const PRODUCT_FILTER_OPTIONS = [
+  'SAMSUNG',
+  'INFINIX',
+  'TECNO MOBILE',
+  'OGUARD',
+  'RGUARD',
+  'DATACULTR',
+  'GLOBETEK',
+]
+const CODPROM_NAME_FILTER_OPTIONS = [
+  'Flex 0%',
+  'Flex 5%',
+  'Flex 10%',
+  'Flex 15%',
+  'Flex 20%',
+]
+const SELECT_FILTER_OPTIONS_BY_HEADER_KEY: Record<string, string[]> = {
+  producto: PRODUCT_FILTER_OPTIONS,
+  codpromnombre: CODPROM_NAME_FILTER_OPTIONS,
+}
+
+// Normalizes header text to map UI rules despite case and separators.
+const normalizeHeaderKey = (header: string): string => {
+  return header.toLowerCase().replace(/[\s_-]/g, '')
+}
 
 // Dynamic filter panel with one input per data column.
 export const FiltersPanel = ({
   headers,
   filters,
   showOnlyToday,
-  dateRangeColumns,
   onFilterChange,
   onShowOnlyTodayChange,
   onResetFilters,
 }: FiltersPanelProps) => {
-  const todayFilterDescription =
-    dateRangeColumns.from && dateRangeColumns.to
-      ? `Usa ${dateRangeColumns.from} y ${dateRangeColumns.to}`
-      : 'No se encontraron columnas de rango de fecha'
-
   return (
     <Container>
       <HeaderRow>
@@ -49,23 +67,38 @@ export const FiltersPanel = ({
         </HeaderActions>
       </HeaderRow>
 
-      <Hint>{todayFilterDescription}</Hint>
-
       <FieldsGrid>
         {headers.map((header) => {
           const isDateField = DATE_HEADER_HINT.test(header)
+          const headerKey = normalizeHeaderKey(header)
+          const selectOptions = SELECT_FILTER_OPTIONS_BY_HEADER_KEY[headerKey]
           const inputType = isDateField ? 'date' : 'text'
 
           return (
             <Field key={header}>
               <Label htmlFor={`filter-${header}`}>{header}</Label>
-              <Input
-                id={`filter-${header}`}
-                type={inputType}
-                value={filters[header] ?? ''}
-                placeholder={isDateField ? '' : `Filtrar por ${header}`}
-                onChange={(event) => onFilterChange(header, event.target.value)}
-              />
+              {selectOptions ? (
+                <Select
+                  id={`filter-${header}`}
+                  value={filters[header] ?? ''}
+                  onChange={(event) => onFilterChange(header, event.target.value)}
+                >
+                  <option value="">Todos</option>
+                  {selectOptions.map((option) => (
+                    <option key={option} value={option}>
+                      {option}
+                    </option>
+                  ))}
+                </Select>
+              ) : (
+                <Input
+                  id={`filter-${header}`}
+                  type={inputType}
+                  value={filters[header] ?? ''}
+                  placeholder={isDateField ? '' : `Filtrar por ${header}`}
+                  onChange={(event) => onFilterChange(header, event.target.value)}
+                />
+              )}
             </Field>
           )
         })}
@@ -125,11 +158,6 @@ const ResetButton = styled.button`
   cursor: pointer;
 `
 
-const Hint = styled.span`
-  font-size: 0.75rem;
-  color: var(--ink-secondary);
-`
-
 const FieldsGrid = styled.div`
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -156,6 +184,19 @@ const Label = styled.label`
 `
 
 const Input = styled.input`
+  border: 1px solid var(--line);
+  border-radius: 0.65rem;
+  padding: 0.56rem 0.62rem;
+  background: #ffffff;
+  color: var(--ink-primary);
+
+  &:focus {
+    outline: 2px solid #cde8ff;
+    border-color: #7ab7e8;
+  }
+`
+
+const Select = styled.select`
   border: 1px solid var(--line);
   border-radius: 0.65rem;
   padding: 0.56rem 0.62rem;

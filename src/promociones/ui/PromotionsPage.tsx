@@ -8,6 +8,21 @@ import { PromotionsTable } from './components/PromotionsTable'
 import { getTodayIso } from '../../shared/utils/date'
 import { layout } from '../../shared/styles/theme'
 
+const HIDDEN_VISUAL_HEADER_KEYS = new Set([
+  'soloaplica',
+  'codprom',
+  'codeprom',
+  'codpromdescripcion',
+  'countrycode',
+  'retailerclassification',
+  'retailersubclassification',
+])
+
+// Normalizes headers so visual-hide rules are resilient to case and separators.
+const normalizeHeaderKey = (header: string): string => {
+  return header.toLowerCase().replace(/[\s_-]/g, '')
+}
+
 // Main domain page orchestrating load, filter and visualization flows.
 export const PromotionsPage = () => {
   const {
@@ -30,6 +45,11 @@ export const PromotionsPage = () => {
 
   const deferredRecords = useDeferredValue(filteredRecords)
   const todayIso = getTodayIso()
+  const visibleHeaders = dataset
+    ? dataset.headers.filter(
+        (header) => !HIDDEN_VISUAL_HEADER_KEYS.has(normalizeHeaderKey(header)),
+      )
+    : []
 
   return (
     <Page>
@@ -74,17 +94,16 @@ export const PromotionsPage = () => {
         {dataset ? (
           <>
             <FiltersPanel
-              headers={dataset.headers}
+              headers={visibleHeaders}
               filters={filters}
               showOnlyToday={showOnlyToday}
-              dateRangeColumns={dataset.dateRangeColumns}
               onFilterChange={setFilterValue}
               onShowOnlyTodayChange={setShowOnlyToday}
               onResetFilters={resetFilters}
             />
 
             <TableScroll>
-              <PromotionsTable headers={dataset.headers} records={deferredRecords} />
+              <PromotionsTable headers={visibleHeaders} records={deferredRecords} />
             </TableScroll>
           </>
         ) : (
